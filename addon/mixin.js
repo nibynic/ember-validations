@@ -9,12 +9,21 @@ var setValidityMixin = Ember.Mixin.create({
   isValid: Ember.computed('validators.@each.isValid', function() {
     var compactValidators = get(this, 'validators').compact();
     var filteredValidators = Ember.EnumerableUtils.filter(compactValidators, function(validator) {
-      return !get(validator, 'isValid');
+      return !get(validator, 'isValid') && !get(validator, 'soft');
     });
 
     return get(filteredValidators, 'length') === 0;
   }),
-  isInvalid: Ember.computed.not('isValid')
+  isInvalid: Ember.computed.not('isValid'),
+  hasNoWarnings: Ember.computed('validators.@each.isValid', function() {
+    var compactValidators = get(this, 'validators').compact();
+    var filteredValidators = Ember.EnumerableUtils.filter(compactValidators, function(validator) {
+      return !get(validator, 'isValid') && get(validator, 'soft');
+    });
+
+    return get(filteredValidators, 'length') === 0;
+  }),
+  hasWarnings: Ember.computed.not('hasNoWarnings')
 });
 
 var pushValidatableObject = function(model, property) {
@@ -78,6 +87,7 @@ export default Ember.Mixin.create(setValidityMixin, {
   init: function() {
     this._super();
     this.errors = Errors.create();
+    this.warnings = Errors.create();
     this.dependentValidationKeys = {};
     this.validators = Ember.A();
     if (get(this, 'validations') === undefined) {
@@ -87,12 +97,15 @@ export default Ember.Mixin.create(setValidityMixin, {
     this.validators.forEach(function(validator) {
       validator.addObserver('errors.[]', this, function(sender) {
         var errors = Ember.A();
+        var warnings = Ember.A();
         this.validators.forEach(function(validator) {
           if (validator.property === sender.property) {
-            errors.addObjects(validator.errors);
+            var collection = get(validator, 'soft') ? warnings : errors;
+            collection.addObjects(validator.errors);
           }
         }, this);
         set(this, 'errors.' + sender.property, errors);
+        set(this, 'warnings.' + sender.property, warnings);
       });
     }, this);
   },

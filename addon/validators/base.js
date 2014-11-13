@@ -11,6 +11,7 @@ export default Ember.Object.extend({
       'if': get(this, 'options.if'),
       unless: get(this, 'options.unless')
     };
+    this.soft = Boolean(this.options && this.options.soft);
     this.model.addObserver(this.property, this, this._validate);
   },
   addObserversForDependentValidationKeys: Ember.on('init', function() {
