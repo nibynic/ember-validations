@@ -6,6 +6,7 @@
 
 ```bash
 npm install
+bower install
 ember build
 ```
 
@@ -74,6 +75,36 @@ export default Ember.ObjectController.extend({
 });
 ```
 
+Though not yet explicitly part of the API, you can also add validators
+to nested objects:
+
+```javascript
+export default Ember.Component.extend({
+  validations: {
+    'user.firstName': {
+      presence: true,
+      length: { minimum: 5 }
+    }
+  }
+});
+```
+
+This is useful for things like Components which don't act as proxies, but
+again, until this is officially built into the project, YMMV.
+
+**Note: If you override the init function, you must call _super()**
+
+```javascript
+export default Ember.ObjectController.extend({
+  init: function() {
+    // this call is necessary, don't forget it!
+    this._super.apply(this, arguments);
+
+    // Your init code...
+  }
+});
+```
+
 ## Validators ##
 
 ### Absence ###
@@ -105,7 +136,7 @@ acceptance: { message: 'you must accept', accept: 'yes' }
 
 ### Confirmation ###
 Expects a `propertyConfirmation` to have the same value as
-`property`
+`property`. The validation must be applied to the `property`, not the `propertyConfirmation` (otherwise it would expect a `propertyConfirmationConfirmation`).
 
 #### Options ####
   * `true` - Passing just `true` will activate validation and use default message
@@ -331,7 +362,7 @@ import Base from 'ember-validations/validators/base';
 export default Base.extend({
   init: function() {
     // this call is necessary, don't forget it!
-    this.super();
+    this._super();
 
     this.dependentValidationKeys.pushObject(this.options.alsoWatch);
   },
@@ -460,7 +491,8 @@ the validations during testing.
 import { test, moduleFor } from 'ember-qunit';
 
 moduleFor('controller:user/edit', 'UserEditController', {
-  needs: ['ember-validations@validator:local/presence',
+  needs: ['service:validations',
+          'ember-validations@validator:local/presence',
           'ember-validations@validator:local/length',
           'validator:local/name',
           'validator:local/email'
@@ -479,7 +511,7 @@ When you use [ember-i18n](https://github.com/jamesarosen/ember-i18n) your `Ember
 
 ```javascript
 Ember.I18n.translations = {
-  errors:
+  errors: {
     inclusion: "is not included in the list",
     exclusion: "is reserved",
     invalid: "is invalid",
@@ -501,6 +533,7 @@ Ember.I18n.translations = {
     otherThan: "must be other than {{count}}",
     odd: "must be odd",
     even: "must be even"
+  }
 }
 ````
 
@@ -516,7 +549,7 @@ This library follows [Semantic Versioning](http://semver.org)
 
 ## Want to help? ##
 
-Please do! We are always looking to improve this gem. Please see our
+Please do! We are always looking to improve this library. Please see our
 [Contribution Guidelines](https://github.com/dockyard/ember-validations/blob/master/CONTRIBUTING.md)
 on how to properly submit issues and pull requests.
 
