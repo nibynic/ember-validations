@@ -43,14 +43,14 @@ If it is a bug [please open an issue on GitHub](https://github.com/dockyard/embe
 
 ## Usage ##
 
-You need to mixin `EmberValidations.Mixin` into any `Ember.Object` you want to add
+You need to mixin `EmberValidations` into any `Ember.Object` you want to add
 validations to:
 
 ```javascript
 import Ember from 'ember';
 import EmberValidations from 'ember-validations';
 
-export default Ember.ObjectController.extend(EmberValidations.Mixin);
+export default Ember.ObjectController.extend(EmberValidations);
 ```
 
 You define your validations as a JSON object. They should be added to
@@ -61,6 +61,8 @@ to the property. If you pass `true` then the property itself will be
 seen as a validatable object.
 
 ```javascript
+import Ember from 'ember';
+
 export default Ember.ObjectController.extend({
   validations: {
     firstName: {
@@ -79,6 +81,8 @@ Though not yet explicitly part of the API, you can also add validators
 to nested objects:
 
 ```javascript
+import Ember from 'ember';
+
 export default Ember.Component.extend({
   validations: {
     'user.firstName': {
@@ -95,6 +99,8 @@ again, until this is officially built into the project, YMMV.
 **Note: If you override the init function, you must call _super()**
 
 ```javascript
+import Ember from 'ember';
+
 export default Ember.ObjectController.extend({
   init: function() {
     // this call is necessary, don't forget it!
@@ -307,7 +313,7 @@ You can place your custom validators into
 import Base from 'ember-validations/validators/base';
 
 export default Base.extend({
-   ...
+  // ...
 });
 ```
 
@@ -327,7 +333,7 @@ You can add your validators to the global object:
 ```javascript
 EmberValidations.validators.local.<ClassName> =
 EmberValidations.validators.Base.extend({
- ...
+  // ...
 });
 ```
 
@@ -342,6 +348,7 @@ validator could be:
 
 ```javascript
 import Base from 'ember-validations/validators/base';
+import Ember from 'ember';
 
 export default Base.extend({
   call: function() {
@@ -358,6 +365,7 @@ to accomplish this:
 
 ```javascript
 import Base from 'ember-validations/validators/base';
+import Ember from 'ember';
 
 export default Base.extend({
   init: function() {
@@ -383,17 +391,19 @@ any given path the validator will automatically trigger.
 #### Inline Validators ####
 
 If you want to create validators inline you can use the
-`EmberValidations.validator` function:
+`validator` function that is part of the `ember-validations` export:
 
 ```javascript
+import EmberValidations, { validator } from 'ember-validations';
+
 User.create({
   validations: {
     name: {
-      inline: EmberValidations.validator(function() {
+      inline: validator(function() {
         if (this.model.get('canNotDoSomething')) {
           return "you can't do this!"
         }
-      }) 
+      })
     }
   }
 });
@@ -414,7 +424,7 @@ User.create({
       if (this.model.get('canNotDoSomething')) {
         return "you can't do this!"
       }
-    }) 
+    })
   }
 });
 ```
@@ -441,13 +451,13 @@ user.validate().then(function() {
 }).finally(function() {
   // all validations complete
   // regardless of isValid state
- user.get('isValid'); // true || false 
+ user.get('isValid'); // true || false
 });
 ```
 
 ## Inspecting Errors ##
 
-After mixing in `EmberValidations.Mixin` into your object it will now have a
+After mixing in `EmberValidations` into your object it will now have a
 `.errors` object. All validation error messages will be placed in there
 for the corresponding property. Errors messages will always be an array.
 
@@ -455,7 +465,7 @@ for the corresponding property. Errors messages will always be an array.
 import Ember from 'ember';
 import EmberValidations from 'ember-validations';
 
-export default Ember.Object.extend(EmberValidations.Mixin, {
+export default Ember.Object.extend(EmberValidations, {
   validations: {
     firstName: { presence: true }
   }
@@ -504,6 +514,50 @@ test('Controller Test', function() { ... });
 
 Where `UserEditController` uses the built-in `presence` and `length` validators,
 and the locally defined `name` and `email` validators.
+
+#### Test Helpers ####
+
+To test whether your Ember validations are working correctly, you can
+use the test helpers:
+
+**`testValidPropertyValues(propertyName, values [, context ])`**
+
+**`testInvalidPropertyValues(propertyName, values [, context ])`**
+
+* `propertyName` (String): the property that you are validating.
+* `values` (Array): an array of property values to check.
+* `context` (function) _optional_: if specified, this function will be
+  called with the object under test as an argument. See example below.
+
+```javascript
+import { test, moduleFor } from 'ember-qunit';
+import {
+  testValidPropertyValues,
+  testInvalidPropertyValues
+} from '../../helpers/validate-properties';
+
+moduleFor('controller:user', 'UserController', {
+  needs: ['ember-validations@validator:local/presence',
+          'ember-validations@validator:local/length'
+         ]
+});
+
+testValidPropertyValues('firstName', ['Winston', '12345']);
+testInvalidPropertyValues('firstName', ['abc', '', null, undefined]);
+```
+
+If a property's validation relies on another property, you can pass a
+context to the test helper:
+
+```javascript
+testValidPropertyValues('lastName', ['Dog', '12345'], function(subject) {
+  subject.set('firstName', 'Boomer');
+});
+
+testValidPropertyValues('lastName', ['', null, undefined], function(subject) {
+  subject.set('firstName', null);
+});
+```
 
 ## i18n ##
 
@@ -555,7 +609,7 @@ on how to properly submit issues and pull requests.
 
 ## Legal ##
 
-[DockYard](http://dockyard.com), LLC &copy; 2013
+[DockYard](http://dockyard.com/ember-consulting), LLC &copy; 2013
 
 [@dockyard](http://twitter.com/dockyard)
 
