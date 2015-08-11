@@ -8,7 +8,7 @@ var set = Ember.set;
 var setValidityMixin = Ember.Mixin.create({
   isValid: Ember.computed('validators.@each.isValid', function() {
     var compactValidators = get(this, 'validators').compact();
-    var filteredValidators = compactValidators.filter(compactValidators, function(validator) {
+    var filteredValidators = compactValidators.filter(function(validator) {
       return !get(validator, 'isValid') && !get(validator, 'soft');
     });
 
@@ -17,7 +17,7 @@ var setValidityMixin = Ember.Mixin.create({
   isInvalid: Ember.computed.not('isValid'),
   hasNoWarnings: Ember.computed('validators.@each.isValid', function() {
     var compactValidators = get(this, 'validators').compact();
-    var filteredValidators = Ember.EnumerableUtils.filter(compactValidators, function(validator) {
+    var filteredValidators = compactValidators.filter(function(validator) {
       return !get(validator, 'isValid') && get(validator, 'soft');
     });
 
