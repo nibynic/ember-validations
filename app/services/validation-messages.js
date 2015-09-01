@@ -1,9 +1,10 @@
 import Ember from 'ember';
 
-export default {
+export default Ember.Service.extend({
+  i18n: Ember.inject.service(),
   render: function(attribute, context) {
-    if (Ember.I18n) {
-      return Ember.I18n.t('errors.' + attribute, context);
+    if (this.get("i18n")) {
+      return this.get("i18n").t('errors.' + attribute, context);
     } else {
       var regex = new RegExp("{{(.*?)}}"),
           attributeName = "";
@@ -37,4 +38,4 @@ export default {
     even: "must be even",
     url: "is not a valid URL"
   }
-};
+});
