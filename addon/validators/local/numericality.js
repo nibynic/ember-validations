@@ -39,7 +39,7 @@ export default Base.extend({
       }
 
       if (prop !== undefined && this.options.messages[key] === undefined) {
-        if (Ember.$.inArray(key, Ember.keys(this.CHECKS)) !== -1) {
+        if (Ember.$.inArray(key, Object.keys(this.CHECKS)) !== -1) {
           this.options.count = prop;
         }
         this.options.messages[key] = this.get("messages").render(key, this.options);

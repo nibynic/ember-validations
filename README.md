@@ -50,7 +50,7 @@ validations to:
 import Ember from 'ember';
 import EmberValidations from 'ember-validations';
 
-export default Ember.ObjectController.extend(EmberValidations);
+export default Ember.Controller.extend(EmberValidations);
 ```
 
 You define your validations as a JSON object. They should be added to
@@ -62,17 +62,18 @@ seen as a validatable object.
 
 ```javascript
 import Ember from 'ember';
+import EmberValidations from 'ember-validations';
 
-export default Ember.ObjectController.extend({
+export default Ember.Controller.extend(EmberValidations, {
   validations: {
-    firstName: {
+    'model.firstName': {
       presence: true,
       length: { minimum: 5 }
     },
-    age: {
+    'model.age': {
       numericality: true
     },
-    profile: true
+    'model.profile': true
   }
 });
 ```
@@ -82,8 +83,9 @@ to nested objects:
 
 ```javascript
 import Ember from 'ember';
+import EmberValidations from 'ember-validations';
 
-export default Ember.Component.extend({
+export default Ember.Component.extend(EmberValidations, {
   validations: {
     'user.firstName': {
       presence: true,
@@ -100,8 +102,9 @@ again, until this is officially built into the project, YMMV.
 
 ```javascript
 import Ember from 'ember';
+import EmberValidations from 'ember-validations';
 
-export default Ember.ObjectController.extend({
+export default Ember.Controller.extend(EmberValidations, {
   init: function() {
     // this call is necessary, don't forget it!
     this._super.apply(this, arguments);
@@ -240,6 +243,7 @@ Will ensure the value is a number
   * `even` - Ensures the value is even
 
 ##### Messages #####
+  * `numericality` - Message used when value failes to be a number. Overrides `i18n`
   * `greaterThan` - Message used when value failes to be greater than. Overrides `i18n`
   * `greaterThanOrEqualTo` - Message used when value failes to be greater than or equal to. Overrides `i18n`
   * `equalTo` - Message used when value failes to be equal to. Overrides `i18n`
@@ -251,6 +255,7 @@ Will ensure the value is a number
 ```javascript
 // Examples
 numericality: true
+numericality: { messages: { numericality: 'must be a number' } }
 numericality: { odd: true, messages: { odd: 'must be an odd number' } }
 numericality: { onlyInteger: true, greaterThan: 5, lessThanOrEqualTo : 10 }
 ```
@@ -284,7 +289,7 @@ in quotes**
 
 ```javascript
 // function form
-firstName: {
+'model.firstName': {
   presence: {
     'if': function(object, validator) {
       return true;
@@ -295,7 +300,7 @@ firstName: {
 // string form
 // if 'canValidate' is a function on the object it will be called
 // if 'canValidate' is a property object.get('canValidate') will be called
-firstName: {
+'model.firstName': {
   presence: {
     unless: 'canValidate'
   }
@@ -398,7 +403,7 @@ import EmberValidations, { validator } from 'ember-validations';
 
 User.create({
   validations: {
-    name: {
+    'model.name': {
       inline: validator(function() {
         if (this.model.get('canNotDoSomething')) {
           return "you can't do this!"
@@ -420,7 +425,7 @@ you can use a more concise syntax:
 ```javascript
 User.create({
   validations: {
-    name: EmberValidations.validator(function() {
+    'model.name': EmberValidations.validator(function() {
       if (this.model.get('canNotDoSomething')) {
         return "you can't do this!"
       }
@@ -467,7 +472,7 @@ import EmberValidations from 'ember-validations';
 
 export default Ember.Object.extend(EmberValidations, {
   validations: {
-    firstName: { presence: true }
+    'model.firstName': { presence: true }
   }
 });
 ```
@@ -590,6 +595,10 @@ Ember.I18n.translations = {
   }
 }
 ````
+
+## Other Resources ##
+
+* [Six-part screencast series on ember-validations](https://www.emberscreencasts.com/tags/form-validations)
 
 ## Authors ##
 
