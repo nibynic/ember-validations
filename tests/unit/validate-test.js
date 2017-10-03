@@ -465,11 +465,11 @@ test('should store validators in cache for faster lookup', function(assert) {
 
   var container = buildContainer();
 
-  var oldLookupFactory = container.lookupFactory;
+  var oldfactoryFor = container.factoryFor;
 
-  container.lookupFactory = function(fullName) {
+  container.factoryFor = function(fullName) {
     validatorResolvedCount += 1;
-    return oldLookupFactory.call(container, fullName);
+    return oldfactoryFor.call(container, fullName);
   };
 
   var user2;
@@ -496,7 +496,7 @@ test('should store validators in cache for faster lookup', function(assert) {
     });
   });
 
-  container.lookupFactory = oldLookupFactory;
+  container.factoryFor = oldfactoryFor;
 
   assert.ok(!get(user, 'isValid'));
   assert.ok(!get(user2, 'isValid'));
