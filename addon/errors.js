@@ -3,13 +3,13 @@ import Ember from 'ember';
 const {
   A: emberArray,
   Object: EmberObject,
-  get,
-  set
+  defineProperty
 } = Ember;
 
 export default EmberObject.extend({
   unknownProperty(property) {
-    set(this, property, emberArray());
-    return get(this, property);
+    let value = emberArray();
+    defineProperty(this, property, function() { return value });
+    return this.get(property);
   }
 });

@@ -1,7 +1,6 @@
 import Ember from 'ember';
 import Errors from 'ember-validations/errors';
 import Base from 'ember-validations/validators/base';
-import getOwner from 'ember-getowner-polyfill';
 
 const {
   A: emberArray,
@@ -15,7 +14,8 @@ const {
   isNone,
   isPresent,
   set,
-  warn
+  warn,
+  getOwner
 } = Ember;
 
 const setValidityMixin = Mixin.create({
@@ -165,7 +165,7 @@ export default Mixin.create(setValidityMixin, {
   buildRuleValidator(property) {
     let pushValidator = (validator, validatorName) => {
       if (validator) {
-        this.validators.pushObject(validator.create({ model: this, property, options: this.validations[property][validatorName] }));
+        this.validators.pushObject(validator.create({ container: Ember.getOwner(this), model: this, property, options: this.validations[property][validatorName] }));
       }
     };
 
