@@ -1,14 +1,13 @@
 import Ember from 'ember';
 import Base from 'ember-validations/validators/base';
 
-var get = Ember.get;
-var set = Ember.set;
+const { get, isPresent, set } = Ember;
 
 export default Base.extend({
-  init: function() {
+  init() {
     this.originalProperty = this.property;
-    this.property = this.property + 'Confirmation';
-    this._super();
+    this.property = `${this.property}Confirmation`;
+    this._super(...arguments);
     this.dependentValidationKeys.pushObject(this.originalProperty);
     /*jshint expr:true*/
     if (this.options === true) {
@@ -16,11 +15,12 @@ export default Base.extend({
       set(this, 'options', { message: this.get("messages").render('confirmation', this.options) });
     }
   },
-  call: function() {
-    var original = get(this.model, this.originalProperty);
-    var confirmation = get(this.model, this.property);
 
-    if(!Ember.isEmpty(original) || !Ember.isEmpty(confirmation)) {
+  call() {
+    let original = get(this.model, this.originalProperty);
+    let confirmation = get(this.model, this.property);
+
+    if (isPresent(original) || isPresent(confirmation)) {
       if (original !== confirmation) {
         this.errors.pushObject(this.options.message);
       }

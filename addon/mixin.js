@@ -1,23 +1,38 @@
 import Ember from 'ember';
 import Errors from 'ember-validations/errors';
 import Base from 'ember-validations/validators/base';
+import getOwner from 'ember-getowner-polyfill';
 
-var get = Ember.get;
-var set = Ember.set;
+const {
+  A: emberArray,
+  ArrayProxy,
+  Mixin,
+  RSVP: { all, reject },
+  computed,
+  computed: { alias, not },
+  get,
+  isArray,
+  isNone,
+  isPresent,
+  set,
+  warn
+} = Ember;
 
-var setValidityMixin = Ember.Mixin.create({
+const setValidityMixin = Mixin.create({
   isValid: Ember.computed('validators.@each.isValid', function() {
-    var compactValidators = get(this, 'validators').compact();
-    var filteredValidators = compactValidators.filter(function(validator) {
+    let compactValidators = get(this, 'validators').compact();
+    let filteredValidators = compactValidators.filter((validator) => {
       return !get(validator, 'isValid') && !get(validator, 'soft');
     });
 
     return get(filteredValidators, 'length') === 0;
   }),
-  isInvalid: Ember.computed.not('isValid'),
+
+  isInvalid: not('isValid'),
+  
   hasNoWarnings: Ember.computed('validators.@each.isValid', function() {
-    var compactValidators = get(this, 'validators').compact();
-    var filteredValidators = compactValidators.filter(function(validator) {
+    let compactValidators = get(this, 'validators').compact();
+    let filteredValidators = compactValidators.filter((validator) => {
       return !get(validator, 'isValid') && get(validator, 'soft');
     });
 
@@ -26,22 +41,23 @@ var setValidityMixin = Ember.Mixin.create({
   hasWarnings: Ember.computed.not('hasNoWarnings')
 });
 
-var pushValidatableObject = function(model, property) {
-  var content = get(model, property);
+const pushValidatableObject = function(model, property) {
+  let content = get(model, property);
 
   model.removeObserver(property, pushValidatableObject);
-  if (Ember.isArray(content)) {
-    model.validators.pushObject(ArrayValidatorProxy.create({model: model, property: property, contentBinding: 'model.' + property}));
+
+  if (isArray(content)) {
+    model.validators.pushObject(ArrayValidatorProxy.create({ model, property, contentBinding: `model.${property}` }));
   } else {
     model.validators.pushObject(content);
   }
 };
 
-var lookupValidator = function(validatorName) {
-  var owner = Ember.getOwner(this);
-  var service = owner.lookup('service:validations');
-  var validators = [];
-  var cache;
+const lookupValidator = function(validatorName) {
+  let owner = getOwner(this);
+  let service = owner.lookup('service:validations');
+  let validators = [];
+  let cache;
 
   if (service) {
     cache = get(service, 'cache');
@@ -52,71 +68,90 @@ var lookupValidator = function(validatorName) {
   if (cache[validatorName]) {
     validators = validators.concat(cache[validatorName]);
   } else {
-    var local = owner.factoryFor('validator:local/'+validatorName);
-    var remote = owner.factoryFor('validator:remote/'+validatorName);
+    let local = owner.resolveRegistration(`validator:local/${validatorName}`);
+    let remote = owner.resolveRegistration(`validator:remote/${validatorName}`);
 
-    if (local || remote) { validators = validators.concat([local, remote]); }
-    else {
-      var base = owner.factoryFor('validator:'+validatorName);
+    if (local || remote) {
+      validators = validators.concat([local, remote]);
+    } else {
+      let base = owner.resolveRegistration(`validator:${validatorName}`);
 
-      if (base) { validators = validators.concat([base]); }
-      else {
-        local = owner.factoryFor('ember-validations@validator:local/'+validatorName);
-        remote = owner.factoryFor('ember-validations@validator:remote/'+validatorName);
+      if (base) {
+        validators = validators.concat([base]);
+      } else {
+        local = owner.resolveRegistration(`ember-validations@validator:local/${validatorName}`);
+        remote = owner.resolveRegistration(`ember-validations@validator:remote/${validatorName}`);
 
-        if (local || remote) { validators = validators.concat([local, remote]); }
+        if (local || remote) {
+          validators = validators.concat([local, remote]);
+        }
       }
     }
 
     cache[validatorName] = validators;
   }
 
-  if (Ember.isEmpty(validators)) {
-    Ember.warn('Could not find the "'+validatorName+'" validator.');
-  }
+  warn(`Could not find the "${validatorName}" validator.`, isPresent(validators), {
+    id: 'ember-validations.faild-to-find-validator'
+  });
 
   return validators;
 };
 
-var ArrayValidatorProxy = Ember.ArrayProxy.extend(setValidityMixin, {
-  validate: function() {
+const ArrayValidatorProxy = ArrayProxy.extend(setValidityMixin, {
+  init() {
+    this._validate();
+  },
+
+  validate() {
     return this._validate();
   },
-  _validate: Ember.on('init', function() {
-    var promises = get(this, 'content').invoke('_validate').without(undefined);
-    return Ember.RSVP.all(promises);
-  }),
-  validators: Ember.computed.alias('content')
+
+  _validate() {
+    let promises = get(this, 'content').invoke('_validate').without(undefined);
+    return all(promises);
+  },
+
+  validators: alias('content')
 });
 
-export default Ember.Mixin.create(setValidityMixin, {
-  init: function() {
-    this._super();
+export default Mixin.create(setValidityMixin, {
+
+  init() {
+    this._super(...arguments);
     this.errors = Errors.create();
     this.warnings = Errors.create();
     this.dependentValidationKeys = {};
-    this.validators = Ember.A();
+    this.validators = emberArray();
+
     if (get(this, 'validations') === undefined) {
       this.validations = {};
     }
+
     this.buildValidators();
-    this.validators.forEach(function(validator) {
+
+    this.validators.forEach((validator) => {
       validator.addObserver('errors.[]', this, function(sender) {
-        var errors = Ember.A();
-        var warnings = Ember.A();
-        this.validators.forEach(function(validator) {
+        let errors = emberArray();
+        let warnings = Ember.A();
+
+        this.validators.forEach((validator) => {
           if (validator.property === sender.property) {
             var collection = get(validator, 'soft') ? warnings : errors;
             collection.addObjects(validator.errors);
           }
-        }, this);
-        set(this, 'errors.' + sender.property, errors);
-        set(this, 'warnings.' + sender.property, warnings);
+        });
+
+        set(this, `errors.${sender.property}`, errors);
+        set(this, `warnings.${sender.property}`, warnings);
       });
-    }, this);
+    });
+
+    this._validate();
   },
-  buildValidators: function() {
-    var property;
+
+  buildValidators() {
+    let property;
 
     for (property in this.validations) {
       if (this.validations[property].constructor === Object) {
@@ -126,10 +161,11 @@ export default Ember.Mixin.create(setValidityMixin, {
       }
     }
   },
-  buildRuleValidator: function(property) {
-    var pushValidator = function(validator) {
+
+  buildRuleValidator(property) {
+    let pushValidator = (validator, validatorName) => {
       if (validator) {
-        this.validators.pushObject(validator.create({model: this, property: property, options: this.validations[property][validatorName]}));
+        this.validators.pushObject(validator.create({ model: this, property, options: this.validations[property][validatorName] }));
       }
     };
 
@@ -137,47 +173,55 @@ export default Ember.Mixin.create(setValidityMixin, {
       this.validations[property] = { inline: this.validations[property] };
     }
 
-    var createInlineClass = function(callback) {
+    let createInlineClass = (callback) => {
       return Base.extend({
-        call: function() {
-          var errorMessage = this.callback.call(this);
+        call() {
+          let errorMessage = this.callback.call(this);
 
           if (errorMessage) {
             this.errors.pushObject(errorMessage);
           }
         },
-        callback: callback
+
+        callback
       });
     };
 
-    for (var validatorName in this.validations[property]) {
+    Object.keys(this.validations[property]).forEach((validatorName) => {
       if (validatorName === 'inline') {
-        pushValidator.call(this, createInlineClass(this.validations[property][validatorName].callback));
+        let validator = createInlineClass(this.validations[property][validatorName].callback);
+        pushValidator(validator, validatorName);
       } else if (this.validations[property].hasOwnProperty(validatorName)) {
-        lookupValidator.call(this, validatorName).forEach(pushValidator, this);
+        lookupValidator.call(this, validatorName).forEach((validator) => {
+          return pushValidator.call(this, validator, validatorName);
+        });
       }
-    }
+    });
   },
-  buildObjectValidator: function(property) {
-    if (Ember.isNone(get(this, property))) {
+
+  buildObjectValidator(property) {
+    if (isNone(get(this, property))) {
       this.addObserver(property, this, pushValidatableObject);
     } else {
       pushValidatableObject(this, property);
     }
   },
-  validate: function() {
-    var self = this;
-    return this._validate().then(function(vals) {
-      var errors = get(self, 'errors');
+
+  validate() {
+    return this._validate().then((vals) => {
+      let errors = get(this, 'errors');
+
       if (vals.indexOf(false) > -1) {
-        return Ember.RSVP.reject(errors);
+        return reject(errors);
       }
+
       return errors;
     });
   },
-  _validate: Ember.on('init', function() {
-    this.validators.filterBy("soft", true).invoke('_validate');
-    var promises = this.validators.filterBy("soft", false).invoke('_validate').without(undefined);
-    return Ember.RSVP.all(promises);
-  })
+
+  _validate() {
+    this.validators.filterBy('soft', true).invoke('_validate');
+    let promises = this.validators.filterBy('soft', false).invoke('_validate').without(undefined);
+    return all(promises);
+  }
 });

@@ -4,10 +4,10 @@ import {
 } from 'ember-qunit';
 
 moduleFor('controller:foo', 'Controller sanity test', {
-  needs: ['ember-validations@validator:local/presence']
+  integration: true
 });
 
 test('does not blow up', function(assert) {
-  var controller = this.subject();
+  let controller = this.subject();
   assert.ok(controller);
 });

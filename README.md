@@ -1,41 +1,22 @@
 # Ember Validations #
 
-[![Build Status](https://secure.travis-ci.org/dockyard/ember-validations.svg?branch=master)](http://travis-ci.org/dockyard/ember-validations)
+[![Build Status](https://travis-ci.org/DockYard/ember-validations.svg?branch=master)](https://travis-ci.org/DockYard/ember-validations) [![CircleCI](https://circleci.com/gh/DockYard/ember-validations.svg?style=shield)](https://circleci.com/gh/DockYard/ember-validations) [![npm version](https://badge.fury.io/js/ember-validations.svg)](https://badge.fury.io/js/ember-validations) [![Ember Observer Score](http://emberobserver.com/badges/ember-validations.svg)](http://emberobserver.com/addons/ember-validations)
 
-## Building yourself ##
+**[ember-validations is built and maintained by DockYard, contact us for expert Ember.js consulting](https://dockyard.com/ember-consulting)**.
 
-```bash
-npm install
-bower install
-ember build
-```
+## WARNING ##
 
-The builds will be in the `dist/` directory.
+This addon is no longer actively developed. At DockYard we have switched over to
+using [ember-changeset-validations](https://github.com/DockYard/ember-changeset-validations/)
+together with [ember-changeset](https://github.com/DockYard/ember-changeset).
+
+We do still maintain this addon.
 
 ## Installing ##
 
-#### With Ember-CLI ####
-
-If you are using
-[`ember-cli`](https://github.com/stefanpenner/ember-cli) you can add
-`ember-validations` to your `package.json`:
-
-```javascript
-"devDependencies": {
-  ...
-  "ember-validations": "~ 2.0.0"
-}
 ```
-
-You may want to be more precise with your version locking.
-
-#### Without Ember-CLI ####
-
-We will continue to build `EmberValidations` to the DockYard build
-server until `ember-cli` is officially recommended by Ember. You can
-select a build version from:
-[http://builds.dockyard.com](http://builds.dockyard.com) for use in
-Bower.
+ember install ember-validations
+```
 
 ## Looking for help? ##
 
@@ -48,9 +29,9 @@ validations to:
 
 ```javascript
 import Ember from 'ember';
-import EmberValidations from 'ember-validations';
+import { Mixin } from 'ember-validations';
 
-export default Ember.Controller.extend(EmberValidations);
+export default Ember.Controller.extend(Mixin);
 ```
 
 You define your validations as a JSON object. They should be added to
@@ -62,9 +43,9 @@ seen as a validatable object.
 
 ```javascript
 import Ember from 'ember';
-import EmberValidations from 'ember-validations';
+import { Mixin } from 'ember-validations';
 
-export default Ember.Controller.extend(EmberValidations, {
+export default Ember.Controller.extend(Mixin, {
   validations: {
     'model.firstName': {
       presence: true,
@@ -83,9 +64,9 @@ to nested objects:
 
 ```javascript
 import Ember from 'ember';
-import EmberValidations from 'ember-validations';
+import { Mixin } from 'ember-validations';
 
-export default Ember.Component.extend(EmberValidations, {
+export default Ember.Component.extend(Mixin, {
   validations: {
     'user.firstName': {
       presence: true,
@@ -96,15 +77,15 @@ export default Ember.Component.extend(EmberValidations, {
 ```
 
 This is useful for things like Components which don't act as proxies, but
-again, until this is officially built into the project, YMMV.
+again, until this is officially built into the project, [YMMV](http://www.urbandictionary.com/define.php?term=ymmv).
 
 **Note: If you override the init function, you must call _super()**
 
 ```javascript
 import Ember from 'ember';
-import EmberValidations from 'ember-validations';
+import { Mixin } from 'ember-validations';
 
-export default Ember.Controller.extend(EmberValidations, {
+export default Ember.Controller.extend(Mixin, {
   init: function() {
     // this call is necessary, don't forget it!
     this._super.apply(this, arguments);
@@ -244,6 +225,7 @@ Will ensure the value is a number
 
 ##### Messages #####
   * `numericality` - Message used when value failes to be a number. Overrides `i18n`
+  * `onlyInteger` -  Message used when value failes to be an integer. Overrides `i18n`
   * `greaterThan` - Message used when value failes to be greater than. Overrides `i18n`
   * `greaterThanOrEqualTo` - Message used when value failes to be greater than or equal to. Overrides `i18n`
   * `equalTo` - Message used when value failes to be equal to. Overrides `i18n`
@@ -375,7 +357,7 @@ import Ember from 'ember';
 export default Base.extend({
   init: function() {
     // this call is necessary, don't forget it!
-    this._super();
+    this._super.apply(this, arguments);
 
     this.dependentValidationKeys.pushObject(this.options.alsoWatch);
   },
@@ -387,7 +369,7 @@ export default Base.extend({
 });
 ```
 
-The `init` function is given access to the `this.options` wich is simply
+The `init` function is given access to the `this.options` which is simply
 a POJO of the options passed to the validator.
 `dependentValidationKeys` is the collection of paths relative to
 `this.model` that will be observed for changes. If any changes occur on
@@ -618,7 +600,7 @@ on how to properly submit issues and pull requests.
 
 ## Legal ##
 
-[DockYard](http://dockyard.com/ember-consulting), LLC &copy; 2013
+[DockYard](http://dockyard.com/ember-consulting), LLC &copy; 2016
 
 [@dockyard](http://twitter.com/dockyard)
 
