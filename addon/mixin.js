@@ -29,7 +29,7 @@ const setValidityMixin = Mixin.create({
   }),
 
   isInvalid: not('isValid'),
-  
+
   hasNoWarnings: Ember.computed('validators.@each.isValid', function() {
     let compactValidators = get(this, 'validators').compact();
     let filteredValidators = compactValidators.filter((validator) => {
@@ -141,9 +141,9 @@ export default Mixin.create(setValidityMixin, {
             collection.addObjects(validator.errors);
           }
         });
-
-        set(this, `errors.${sender.property}`, errors);
-        set(this, `warnings.${sender.property}`, warnings);
+        
+        get(this, `errors.${sender.property}`).clear().addObjects(errors);
+        get(this, `warnings.${sender.property}`).clear().addObjects(warnings);
       });
     });
 

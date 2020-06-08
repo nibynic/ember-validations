@@ -9,7 +9,7 @@ const {
 export default EmberObject.extend({
   unknownProperty(property) {
     let value = emberArray();
-    defineProperty(this, property, function() { return value });
+    defineProperty(this, property, Ember.computed(function() { return value }));
     return this.get(property);
   }
 });
