@@ -11,5 +11,7 @@ export default EmberObject.extend({
     let value = emberArray();
     defineProperty(this, property, Ember.computed(function() { return value }));
     return this.get(property);
-  }
+  },
+
+  then: null
 });
